@@ -1,0 +1,109 @@
+program AbstractFactoryWikiBook;
+
+{$APPTYPE CONSOLE}
+
+{$R *.res}
+
+uses
+  System.SysUtils;
+
+type
+  TAbstractFactory = class abstract
+    procedure Paint(); virtual; abstract;
+  end;
+
+  TGUIFactory = class abstract
+    function CreateButton(): TAbstractFactory; virtual; abstract;
+  end;
+
+  TOSXButton = class(TAbstractFactory)
+    public
+    procedure Paint();override;
+  end;
+
+  TWinButton = class(TAbstractFactory)
+    public
+      procedure Paint(); override;
+  end;
+
+  TOSXFactory = class(TGUIFactory)
+  public
+    function CreateButton() : TAbstractFactory; override;
+  end;
+
+  TWinFactory = class(TGUIFactory)
+  public
+    function CreateButton(): TAbstractFactory; override;
+  end;
+
+  TApplication = class
+    public
+      constructor Create(factory :TGUIFactory);
+  end;
+
+  TApplicationRunner = class
+    sysType: string;
+    public
+      function CreateOsSpecificFactory(sysType: string): TGUIFactory;
+  end;
+
+{ TOSXButton }
+
+procedure TOSXButton.Paint;
+begin
+  WriteLn('I`m an OSXButton');
+end;
+
+{ TWinButton }
+
+procedure TWinButton.Paint;
+begin
+  WriteLn('I`m a WinButton');
+end;
+
+{ TOSXFactory }
+
+function TOSXFactory.CreateButton: TAbstractFactory;
+begin
+  Result:= TOSXButton.Create;
+end;
+
+{ TWinFactory }
+
+function TWinFactory.CreateButton: TAbstractFactory;
+begin
+  Result:= TWinButton.Create;
+end;
+
+
+{ TApplication }
+
+constructor TApplication.Create(factory: TGUIFactory);
+var button: TAbstractFactory;
+begin
+  button:= factory.CreateButton;
+  button.Paint;
+end;
+
+{ TApplicationRunner }
+
+function TApplicationRunner.CreateOsSpecificFactory(sysType: string): TGUIFactory;
+begin
+  if (sysType = 'Win') then
+   Result := TWinFactory.Create
+  else
+    Result:= TOSXFactory.Create;
+end;
+
+var App: TApplication;
+begin
+  try
+    { TODO -oUser -cConsole Main : Insert code here }
+    App:= TApplication.Create(TApplicationRunner.Create.CreateOsSpecificFactory('Winn'));
+    Sleep(10000);
+    FreeAndNil(App);
+  except
+    on E: Exception do
+      Writeln(E.ClassName, ': ', E.Message);
+  end;
+end.
